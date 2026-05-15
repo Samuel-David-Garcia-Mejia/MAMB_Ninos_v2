@@ -180,7 +180,12 @@ async function initCamera() {
     video.srcObject = stream;
   } catch (err) {
     console.error("Camera error:", err);
-    showToast("No se pudo iniciar la cámara");
+    // Fallback: open native camera via file input on mobile
+    const fileInput = document.getElementById('camera-file-input');
+    if (fileInput) {
+      fileInput.value = '';
+      fileInput.click();
+    }
   }
 }
 
@@ -211,6 +216,19 @@ function takePhoto() {
   }
   
   nav('s-preview');
+}
+
+function handleFileCapture(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    capturedImageData = ev.target.result;
+    const previewImg = document.getElementById('preview-img');
+    if (previewImg) previewImg.src = capturedImageData;
+    nav('s-preview');
+  };
+  reader.readAsDataURL(file);
 }
 
 // ── PROCESSING SIMULATION ─────────────────────────
@@ -680,6 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Swipe gesture
   initSwipe();
 
+  // File input capture fallback
+  document.getElementById('camera-file-input')?.addEventListener('change', handleFileCapture);
+
   // Gallery card press feedback
   document.querySelectorAll('.gal-card,.artist-card,.ev-card,.event-mini').forEach(el => {
     el.addEventListener('touchstart', () => el.style.transform = 'scale(.97)', { passive: true });
@@ -954,6 +975,7 @@ window.triggerAutosave = triggerAutosave;
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
 window.toggleFav = toggleFav;
+window.handleFileCapture = handleFileCapture;
 window.takePhoto = takePhoto;
 window.startAIProcessing = startAIProcessing;
 window.saveObra = saveObra;
