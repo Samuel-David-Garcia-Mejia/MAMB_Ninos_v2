@@ -617,20 +617,32 @@ function initDragToScroll() {
 }
 
 // ── GALLERY VIEWER ────────────────────────────────
-function openGalleryArtwork(el) {
-  const thumb = el.querySelector('.gal-thumb');
-  const title = el.querySelector('strong').textContent;
-  const author = el.querySelector('span').textContent;
-  const styleTag = el.querySelector('.style-tag').textContent;
-
+function openGalleryArtwork(data) {
   const gvImg = document.getElementById('gv-img');
-  if (gvImg) {
-    const computedStyle = window.getComputedStyle(thumb);
-    gvImg.style.backgroundImage = computedStyle.backgroundImage;
-    gvImg.style.backgroundColor = computedStyle.backgroundColor;
+  const gvTitle = document.getElementById('gv-title');
+  const gvAuthor = document.getElementById('gv-author');
+  if (!gvImg) return;
+
+  if (typeof data === 'object' && data.querySelector) {
+    // Called from static HTML card with `this`
+    const thumb = data.querySelector('.gal-thumb');
+    const title = data.querySelector('strong')?.textContent || '';
+    const author = data.querySelector('span')?.textContent || '';
+    const styleTag = data.querySelector('.style-tag')?.textContent || '';
+    if (thumb) {
+      const cs = window.getComputedStyle(thumb);
+      gvImg.style.backgroundImage = cs.backgroundImage;
+      gvImg.style.backgroundColor = cs.backgroundColor;
+    }
+    if (gvTitle) gvTitle.textContent = title;
+    if (gvAuthor) gvAuthor.textContent = author + (styleTag ? ' · ' + styleTag : '');
+  } else {
+    // Called from dynamic card with data object
+    gvImg.style.backgroundImage = "url('" + data.imagen_url + "')";
+    gvImg.style.backgroundColor = 'transparent';
+    if (gvTitle) gvTitle.textContent = data.nombre || '';
+    if (gvAuthor) gvAuthor.textContent = (data.autor || 'Autor') + ' · ' + (data.estilo || '');
   }
-  document.getElementById('gv-title').textContent = title;
-  document.getElementById('gv-author').textContent = author + ' · ' + styleTag;
 
   nav('s-gallery-viewer');
 }
@@ -944,7 +956,7 @@ async function loadObras() {
       const card = document.createElement('div');
       card.className = 'gal-card';
       card.style.height = height + 'px';
-      card.onclick = () => openGalleryArtwork(obra.nombre, 'Autor', obra.estilo);
+      card.onclick = () => openGalleryArtwork(obra);
 
       card.innerHTML = `
         <div style="position:absolute;inset:0;width:100%;height:100%;background-image:url('${obra.imagen_url}');background-size:cover;background-position:center;border-radius:var(--r-md);"></div>
